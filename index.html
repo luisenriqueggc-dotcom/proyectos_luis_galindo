@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PROYECTOS · Luis Galindo</title>
-  <meta name="description" content="Repositorio de proyectos creativos con visor de PDFs" />
+  <meta name="description" content="Repositorio de proyectos creativos con visor de PDFs y videos (Vimeo)" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=League+Spartan:wght@600;700;800;900&display=swap" rel="stylesheet">
@@ -17,7 +17,7 @@
       --muted: #d8e6ff;
       --panel: rgba(255,255,255,.10);
       --panel-border: rgba(255,255,255,.22);
-      --grid-alpha: 0.6; /* opacidad del grid constante en toda la página */
+      --grid-alpha: 0.6;
     }
     *{box-sizing:border-box}
     body{
@@ -25,31 +25,27 @@
       color:var(--text); background:linear-gradient(180deg, var(--sky-1) 0%, var(--sky-2) 55%, var(--sky-3) 100%);
       overflow-x:hidden;
     }
-    /* GRID GLOBAL de página (opacidad constante) */
+    /* Grid global */
     body::before{
       content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
       background:
         repeating-linear-gradient(to right, rgba(255,255,255,var(--grid-alpha)) 0 1px, transparent 1px 120px),
         repeating-linear-gradient(to bottom, rgba(255,255,255,var(--grid-alpha)) 0 1px, transparent 1px 120px);
     }
-
     .hero{
       position:relative; min-height:40vh; display:flex; align-items:center; justify-content:center; padding:32px 16px 16px; z-index:1;
     }
     .hero-inner{max-width:1100px; width:100%; position:relative; text-align:center}
     .kicker{letter-spacing:.16em; text-transform:uppercase; font-weight:800; opacity:.85; margin:0 0 8px 2px}
     .title{font-family: "League Spartan", Inter, system-ui; font-size:clamp(48px, 12vw, 144px); line-height:.85; margin:0; letter-spacing:.02em; text-shadow:0 10px 30px rgba(0,0,0,.35)}
-    .tagline{font-size:clamp(14px, 2.6vw, 22px); margin:12px 0 24px; color:var(--muted)}
-
+    .tagline{font-size:clamp(14px, 2.6vw, 22px); margin:12px 0 24px; color:#dfeaff}
     .layout{display:grid; grid-template-columns:320px 1fr; gap:16px; max-width:1100px; margin:-20px auto 28px; padding:0 20px; position:relative; z-index:1}
     aside, main{backdrop-filter:saturate(140%) blur(8px); background:var(--panel); border:1px solid var(--panel-border); border-radius:16px}
-
     .list-header{padding:12px 14px; border-bottom:1px solid var(--panel-border); font-size:13px; color:#eaf2ff; display:flex; align-items:center; gap:8px}
     .search{position:relative; flex:1}
     .search input{width:100%; padding:10px 12px 10px 36px; border-radius:10px; border:1px solid var(--panel-border); background:rgba(255,255,255,.06); color:#fff; outline:none}
     .search input::placeholder{color:#eaf2ffcc}
     .search svg{position:absolute; left:10px; top:50%; transform:translateY(-50%); opacity:.75}
-
     .list{max-height:calc(100vh - 280px); overflow:auto}
     .item{display:flex; gap:10px; padding:12px 14px; cursor:pointer; border-bottom:1px dashed rgba(255,255,255,.18); align-items:center}
     .item:hover{background:rgba(255,255,255,.06)}
@@ -57,15 +53,12 @@
     .item .meta{display:flex; flex-direction:column}
     .item .title{font-size:14px; font-weight:700; line-height:1.3}
     .item .sub{font-size:12px; opacity:.8}
-
     main{min-height:70vh; display:flex; flex-direction:column; overflow:hidden}
     .viewer-bar{display:flex; align-items:center; gap:8px; padding:10px; border-bottom:1px solid var(--panel-border); background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));}
     .viewer-bar .name{font-size:14px; opacity:.9}
     .viewer{width:100%; min-height:calc(100vh - 280px); background:#0a1020; display:flex; align-items:stretch; justify-content:center}
     .viewer iframe, .viewer video{width:100%; height:calc(100vh - 280px); border:0; background:#0a1020}
-
     footer{max-width:1100px; margin:8px auto 40px; padding:0 20px; color:#eaf2ff; font-size:12px; opacity:.9; position:relative; z-index:1}
-
     @media (max-width: 980px){
       .layout{grid-template-columns:1fr}
       .viewer iframe, .viewer video{height:60vh}
@@ -91,7 +84,7 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
             <path d="M21 21l-4.3-4.3m1.8-5.2a7 7 0 11-14 0 7 7 0 0114 0z" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
           </svg>
-          <input id="search" type="search" placeholder="Buscar PDF por nombre…" />
+          <input id="search" type="search" placeholder="Buscar por nombre…" />
         </div>
       </div>
       <div class="list" id="list"></div>
@@ -106,10 +99,11 @@
   </div>
 
   <footer>
-    Sube tus archivos a la carpeta <code>/pdfs</code> del repositorio y agrega sus metadatos al arreglo <code>DOCS</code> en este archivo.
+    Coloca tus archivos en <code>/pdfs</code> o usa enlaces de <code>Vimeo</code> y edita el arreglo <code>DOCS</code>.
   </footer>
 
   <script>
+    /* === Tu catálogo === */
     const DOCS = [
       { type: "pdf",   title: "Portafolio 2025 Luis Galindo", file: "pdfs/Portafolio_2025_Luis_Galindo.pdf" },
       { type: "pdf",   title: "BOOK 2024",                    file: "pdfs/BOOK_2024.pdf" },
@@ -117,13 +111,16 @@
       { type: "vimeo", title: "Demo Vimeo #2",                file: "https://player.vimeo.com/video/825237364?h=521da1c17e" }
     ];
 
+    /* === Utils para query params (codificados) === */
     function getParam(name){
       const url = new URL(window.location.href);
-      return url.searchParams.get(name);
+      const v = url.searchParams.get(name);
+      return v ? decodeURIComponent(v) : v;
     }
     function setParam(name, value){
       const url = new URL(window.location.href);
-      if(value == null){ url.searchParams.delete(name); } else { url.searchParams.set(name, value); }
+      if(value == null){ url.searchParams.delete(name); }
+      else { url.searchParams.set(name, encodeURIComponent(value)); }
       history.replaceState({}, "", url);
     }
 
@@ -150,7 +147,7 @@
             </svg>
             <div class="meta">
               <div class="title">${doc.title}</div>
-              <div class="sub">${doc.file}</div>
+              <div class="sub">${doc.type === 'pdf' ? doc.file : new URL(doc.file).hostname + new URL(doc.file).pathname}</div>
             </div>
           `;
           item.addEventListener('click', () => openDoc(i));
@@ -181,30 +178,58 @@
       currentNameEl.textContent = doc.title;
 
       if(doc.type === 'video'){
-        // Renderiza un video con controles
         const video = document.createElement('video');
         video.controls = true;
         video.playsInline = true;
         video.preload = 'metadata';
-        if(doc.poster) video.poster = doc.poster;
         const source = document.createElement('source');
         source.src = doc.file;
-        // tipo simple según extensión
-        const ext = doc.file.split('.').pop().toLowerCase();
-        source.type = ext === 'webm' ? 'video/webm' : 'video/mp4';
+        source.type = 'video/mp4';
         video.appendChild(source);
         viewerContainer.innerHTML = '';
         viewerContainer.appendChild(video);
-      } else {
-        // PDF en iframe
-        const src = `${doc.file}#toolbar=1&navpanes=0&scrollbar=1&view=FitH`;
+
+      } else if(doc.type === 'vimeo'){
+        const iframe = document.createElement('iframe');
+        iframe.src = doc.file;
+        iframe.width = "100%";
+        iframe.height = "100%";
+        iframe.frameBorder = "0";
+        iframe.allow = "autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share";
+        iframe.allowFullscreen = true;
+        viewerContainer.innerHTML = '';
+        viewerContainer.appendChild(iframe);
+
+      } else { // PDF
+        const src = `${doc.file}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`;
         viewerContainer.innerHTML = `<iframe src="${src}" title="${doc.title}"></iframe>`;
       }
 
       setParam('file', doc.file);
       highlightActive();
     }
-        init();
+
+    searchEl.addEventListener('input', (e) => renderList(e.target.value));
+
+    function init(){
+      // limpia búsqueda
+      if (searchEl) searchEl.value = "";
+      renderList("");
+
+      // si hay ?file=, intenta abrirlo
+      const q = getParam('file');
+      const idx = DOCS.findIndex(d => d.file === q);
+      if(idx >= 0){
+        openDoc(idx);
+        const el = [...listEl.children].find(n => Number(n.dataset.index) === idx);
+        if(el) el.scrollIntoView({block:'nearest'});
+      } else if (DOCS.length > 0){
+        // si no hay query, abre el primero por defecto
+        openDoc(0);
+      }
+    }
+    init();
   </script>
 </body>
 </html>
+
