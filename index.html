@@ -4,11 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PROYECTOS · Luis Galindo</title>
-  <meta name="description" content="Repositorio de proyectos creativos con visor de PDFs y videos (Vimeo)" />
+  <meta name="description" content="Repositorio de proyectos creativos con visor de PDFs (Drive) y videos (Vimeo)" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=League+Spartan:wght@600;700;800;900&display=swap" rel="stylesheet">
-
   <style>
     :root{
       --sky-1: #5aa6ff;
@@ -62,16 +61,12 @@
     .viewer-bar .name{ font-size:14px; opacity:.9 }
 
     .viewer{
-      width:100%;
-      min-height:calc(100vh - 280px);
-      background:#0a1020;
+      width:100%; min-height:calc(100vh - 280px); background:#0a1020;
       display:flex; align-items:stretch; justify-content:center;
-      overflow:auto; /* para hacer scroll entre páginas renderizadas */
-      -webkit-overflow-scrolling: touch;
+      overflow:auto; -webkit-overflow-scrolling: touch;
     }
     .viewer iframe, .viewer video{ width:100%; height:calc(100vh - 280px); border:0; background:#0a1020 }
 
-    /* Ajuste de altura en móviles para que el contenedor sea alto */
     @media (max-width: 980px){
       .layout{ grid-template-columns:1fr }
       .viewer{ min-height:60vh }
@@ -80,17 +75,6 @@
 
     footer{ max-width:1100px; margin:8px auto 40px; padding:0 20px; color:#eaf2ff; font-size:12px; opacity:.9; position:relative; z-index:1; text-align:center }
   </style>
-
-  <!-- PDF.js (para renderizar SIEMPRE los PDFs) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.js" defer></script>
-  <script>
-    window.addEventListener('DOMContentLoaded', () => {
-      if (window['pdfjsLib']) {
-        pdfjsLib.GlobalWorkerOptions.workerSrc =
-          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.worker.min.js";
-      }
-    });
-  </script>
 </head>
 <body>
   <section class="hero">
@@ -128,10 +112,12 @@
   <script>
     /* === Catálogo === */
     const DOCS = [
-      { type: "pdf",   title: "Portafolio 2025 Luis Galindo", file: "pdfs/Portafolio_2025_Luis_Galindo.pdf" },
-      { type: "pdf",   title: "BOOK 2024",                    file: "pdfs/BOOK_2024.pdf" },
-      { type: "vimeo", title: "MORDISKO (Vimeo)",             file: "https://player.vimeo.com/video/1112778404?badge=0&autopause=0&player_id=0&app_id=58479" },
-      { type: "vimeo", title: "Demo Vimeo #2",                file: "https://player.vimeo.com/video/825237364?h=521da1c17e" }
+      // PDFs desde Google Drive (usa el FILE_ID)
+      { type: "gdrive", title: "Portafolio 2025 (Drive)", file: "1f4HQLeRPqBuTrnQfgLGYHfTBc-DrcdMG" },
+      { type: "gdrive", title: "BOOK 2024 (Drive)",       file: "1xKhrG9HJvWF9EI5vvuAa96-6FZ6cT-Rz" },
+      // Videos Vimeo
+      { type: "vimeo",  title: "MORDISKO (Vimeo)",       file: "https://player.vimeo.com/video/1112778404?badge=0&autopause=0&player_id=0&app_id=58479" },
+      { type: "vimeo",  title: "Demo Vimeo #2",          file: "https://player.vimeo.com/video/825237364?h=521da1c17e" }
     ];
 
     /* === Utils (query params codificados) === */
@@ -163,9 +149,9 @@
           const item = document.createElement('div');
           item.className = 'item';
           item.dataset.index = i;
-          const sub = (doc.type === 'pdf')
-            ? doc.file
-            : (()=>{ try{ const u=new URL(doc.file); return u.hostname+u.pathname; }catch{ return doc.file; } })();
+          const sub = (doc.type === 'vimeo')
+            ? (()=>{ try{ const u=new URL(doc.file); return u.hostname+u.pathname; }catch{ return doc.file; } })()
+            : (doc.type === 'gdrive' ? `drive.google.com/file/d/${doc.file}` : doc.file);
           item.innerHTML = `
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
               <path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.6"/>
@@ -197,84 +183,13 @@
       }
     }
 
-    /* --- Render PDF con PDF.js (SIEMPRE) --- */
-    async function renderPDFWithPDFJS(url){
-      const container = document.getElementById('viewerContainer');
-      container.innerHTML = ''; // limpiar
-
-      if (!window['pdfjsLib']) {
-        // fallback si por algún motivo no cargó pdf.js
-        container.innerHTML = `<iframe src="${url}#zoom=page-width&toolbar=0&view=FitH" style="width:100%;height:100%;border:0;"></iframe>`;
-        return;
-      }
-
-      const loading = document.createElement('div');
-      loading.style.padding = '12px';
-      loading.textContent = 'Cargando documento…';
-      container.appendChild(loading);
-
-      const pdf = await pdfjsLib.getDocument(url).promise;
-      container.innerHTML = '';
-
-      const pagesWrapper = document.createElement('div');
-      pagesWrapper.style.width = '100%';
-      pagesWrapper.style.display = 'flex';
-      pagesWrapper.style.flexDirection = 'column';
-      pagesWrapper.style.gap = '12px';
-      pagesWrapper.style.alignItems = 'center';
-      container.appendChild(pagesWrapper);
-
-      async function renderAllPages(){
-        pagesWrapper.innerHTML = '';
-        const targetWidth = Math.min(container.clientWidth, 1200);
-        for (let p = 1; p <= pdf.numPages; p++) {
-          const page = await pdf.getPage(p);
-          const viewport = page.getViewport({ scale: 1 });
-          const scale = targetWidth / viewport.width;
-          const scaledViewport = page.getViewport({ scale });
-
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          canvas.width = Math.floor(scaledViewport.width);
-          canvas.height = Math.floor(scaledViewport.height);
-          canvas.style.width = '100%';
-          canvas.style.maxWidth = targetWidth + 'px';
-          canvas.style.height = 'auto';
-          canvas.style.background = '#0a1020';
-
-          pagesWrapper.appendChild(canvas);
-          await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
-        }
-      }
-
-      await renderAllPages();
-
-      let resizeTO;
-      window.addEventListener('resize', () => {
-        clearTimeout(resizeTO);
-        resizeTO = setTimeout(renderAllPages, 180);
-      }, { passive: true });
-    }
-
     function openDoc(index){
       const doc = DOCS[index];
       if(!doc) return;
       activeIndex = index;
       currentNameEl.textContent = doc.title;
 
-      if(doc.type === 'video'){
-        const video = document.createElement('video');
-        video.controls = true;
-        video.playsInline = true;
-        video.preload = 'metadata';
-        const source = document.createElement('source');
-        source.src = doc.file;
-        source.type = 'video/mp4';
-        video.appendChild(source);
-        viewerContainer.innerHTML = '';
-        viewerContainer.appendChild(video);
-
-      } else if(doc.type === 'vimeo'){
+      if(doc.type === 'vimeo'){
         const iframe = document.createElement('iframe');
         iframe.src = doc.file;
         iframe.width = "100%";
@@ -285,8 +200,37 @@
         viewerContainer.innerHTML = '';
         viewerContainer.appendChild(iframe);
 
-      } else { // PDF -> SIEMPRE PDF.js
-        renderPDFWithPDFJS(doc.file);
+      } else if (doc.type === 'gdrive') {
+        // Visor nativo de Google Drive (estable en iOS/Android/Desktop)
+        const iframe = document.createElement('iframe');
+        iframe.src = `https://drive.google.com/file/d/${doc.file}/preview`;
+        iframe.width = "100%";
+        iframe.height = "100%";
+        iframe.frameBorder = "0";
+        iframe.allow = "autoplay";
+        iframe.allowFullscreen = true;
+        viewerContainer.innerHTML = '';
+        viewerContainer.appendChild(iframe);
+
+      } else if (doc.type === 'urlpdf') {
+        // Alternativa: Google Docs Viewer envolviendo una URL directa a PDF
+        const iframe = document.createElement('iframe');
+        iframe.src = `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(doc.file)}`;
+        iframe.width = "100%";
+        iframe.height = "100%";
+        iframe.frameBorder = "0";
+        iframe.allowFullscreen = true;
+        viewerContainer.innerHTML = '';
+        viewerContainer.appendChild(iframe);
+
+      } else if (doc.type === 'video') {
+        const video = document.createElement('video');
+        video.controls = true; video.playsInline = true; video.preload = 'metadata';
+        const source = document.createElement('source');
+        source.src = doc.file; source.type = 'video/mp4';
+        video.appendChild(source);
+        viewerContainer.innerHTML = '';
+        viewerContainer.appendChild(video);
       }
 
       setParam('file', doc.file);
@@ -313,3 +257,4 @@
   </script>
 </body>
 </html>
+
