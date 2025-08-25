@@ -20,6 +20,7 @@
       --grid-alpha: 0.6;
     }
     *{box-sizing:border-box}
+    html, body { height: 100%; }
     body{
       margin:0; font-family: Inter, ui-sans-serif, system-ui;
       color:var(--text); background:linear-gradient(180deg, var(--sky-1) 0%, var(--sky-2) 55%, var(--sky-3) 100%);
@@ -59,19 +60,28 @@
     main{ min-height:70vh; display:flex; flex-direction:column; overflow:hidden }
     .viewer-bar{ display:flex; align-items:center; gap:8px; padding:10px; border-bottom:1px solid var(--panel-border); background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06)); }
     .viewer-bar .name{ font-size:14px; opacity:.9 }
-    .viewer{ width:100%; min-height:calc(100vh - 280px); background:#0a1020; display:flex; align-items:stretch; justify-content:center }
+
+    .viewer{
+      width:100%;
+      min-height:calc(100vh - 280px);
+      background:#0a1020;
+      display:flex; align-items:stretch; justify-content:center;
+      overflow:auto; /* para hacer scroll entre páginas renderizadas */
+      -webkit-overflow-scrolling: touch;
+    }
     .viewer iframe, .viewer video{ width:100%; height:calc(100vh - 280px); border:0; background:#0a1020 }
 
-    footer{ max-width:1100px; margin:8px auto 40px; padding:0 20px; color:#eaf2ff; font-size:12px; opacity:.9; position:relative; z-index:1; text-align:center }
-
+    /* Ajuste de altura en móviles para que el contenedor sea alto */
     @media (max-width: 980px){
       .layout{ grid-template-columns:1fr }
-      .viewer iframe, .viewer video{ height:60vh }
+      .viewer{ min-height:60vh }
       aside{ order:2 } main{ order:1 }
     }
+
+    footer{ max-width:1100px; margin:8px auto 40px; padding:0 20px; color:#eaf2ff; font-size:12px; opacity:.9; position:relative; z-index:1; text-align:center }
   </style>
 
-  <!-- PDF.js (fallback para móviles/iOS) -->
+  <!-- PDF.js (para renderizar SIEMPRE los PDFs) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.js" defer></script>
   <script>
     window.addEventListener('DOMContentLoaded', () => {
@@ -187,19 +197,13 @@
       }
     }
 
-    /* --- Detección simple de móviles/Safari para usar PDF.js --- */
-    function isMobilePDFSensitive(){
-      const ua = navigator.userAgent || navigator.vendor || window.opera;
-      const isiOS = /iPad|iPhone|iPod/.test(ua);
-      const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
-      return isiOS || isSafari;
-    }
-
+    /* --- Render PDF con PDF.js (SIEMPRE) --- */
     async function renderPDFWithPDFJS(url){
       const container = document.getElementById('viewerContainer');
       container.innerHTML = ''; // limpiar
 
       if (!window['pdfjsLib']) {
+        // fallback si por algún motivo no cargó pdf.js
         container.innerHTML = `<iframe src="${url}#zoom=page-width&toolbar=0&view=FitH" style="width:100%;height:100%;border:0;"></iframe>`;
         return;
       }
@@ -217,14 +221,15 @@
       pagesWrapper.style.display = 'flex';
       pagesWrapper.style.flexDirection = 'column';
       pagesWrapper.style.gap = '12px';
+      pagesWrapper.style.alignItems = 'center';
       container.appendChild(pagesWrapper);
 
       async function renderAllPages(){
         pagesWrapper.innerHTML = '';
+        const targetWidth = Math.min(container.clientWidth, 1200);
         for (let p = 1; p <= pdf.numPages; p++) {
           const page = await pdf.getPage(p);
           const viewport = page.getViewport({ scale: 1 });
-          const targetWidth = Math.min(container.clientWidth, 1200);
           const scale = targetWidth / viewport.width;
           const scaledViewport = page.getViewport({ scale });
 
@@ -233,6 +238,7 @@
           canvas.width = Math.floor(scaledViewport.width);
           canvas.height = Math.floor(scaledViewport.height);
           canvas.style.width = '100%';
+          canvas.style.maxWidth = targetWidth + 'px';
           canvas.style.height = 'auto';
           canvas.style.background = '#0a1020';
 
@@ -279,13 +285,8 @@
         viewerContainer.innerHTML = '';
         viewerContainer.appendChild(iframe);
 
-      } else { // PDF
-        if (isMobilePDFSensitive()){
-          renderPDFWithPDFJS(doc.file);
-        } else {
-          const src = `${doc.file}#zoom=page-width&toolbar=0&navpanes=0&scrollbar=1&view=FitH`;
-          viewerContainer.innerHTML = `<iframe src="${src}" title="${doc.title}"></iframe>`;
-        }
+      } else { // PDF -> SIEMPRE PDF.js
+        renderPDFWithPDFJS(doc.file);
       }
 
       setParam('file', doc.file);
